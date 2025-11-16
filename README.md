@@ -76,6 +76,16 @@ O dataset contém:
 * **Arestas:** relações de recomendação/similaridade entre jogos
 * **Possíveis atributos:** id, nome, nota, categoria etc.
 
+| Critério                                      | Dataset atende? | Justificativa                              |
+| --------------------------------------------- | --------------- | ------------------------------------------ |
+| Grafo claro                                   | ✔               | Nós = jogos, arestas = recomendações       |
+| Funciona com PageRank                         | ✔               | Grafo dirigido, perfeito para centralidade |
+| Funciona com Comunidades                      | ✔               | LPA gera clusters naturais                 |
+| Pequeno e eficiente                           | ✔               | Top-40 ou Top-100 → leve para GraphX       |
+| Visualmente compreensível                     | ✔               | Dá para fazer gráficos bonitos             |
+| Relaciona-se diretamente ao tema do professor | ✔               | É um problema real de recomendação         |
+| Fácil de explicar                             | ✔               | Jogo A → Jogo B básico                     |
+
 Nós tratamos o dataset em dois arquivos:
 
 ```
