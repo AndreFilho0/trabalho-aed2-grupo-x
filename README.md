@@ -1,6 +1,6 @@
 
 
-#  ** — Sistema de Recomendação de Jogos com Spark GraphX**
+#   — Sistema de Recomendação de Jogos com Spark GraphX
 
 # **Sistema de Recomendação de Jogos de Tabuleiro usando Grafos (Spark GraphX)**
 
