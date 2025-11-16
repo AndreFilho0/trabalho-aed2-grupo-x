@@ -1,0 +1,20 @@
+services:
+  spark-notebook:
+    build: .
+    container_name: spark-graphx-aed2
+    ports:
+      - "8888:8888" # Jupyter Notebook
+      - "4040:4040" # Spark UI
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./dados:/app/dados
+      - ./src:/app/src
+    environment:
+      - SPARK_MASTER=local[*]
+      - PYSPARK_PYTHON=python3
+    networks:
+      - spark-network
+
+networks:
+  spark-network:
+    driver: bridge
