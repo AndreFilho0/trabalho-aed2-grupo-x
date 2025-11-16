@@ -33,29 +33,46 @@ Abra seu navegador em: http://localhost:8888
 
 ## Estrutura do Projeto
 ```
-trabalho-aed2-grafos/
-├── Dockerfile                          # Configuração do ambiente
-├── docker-compose.yml                  # Orquestração dos containers
-├── README.md                           # Este arquivo
-├── dados/
-│   ├── boardgames_100.json            # Dataset original
-│   ├── nodes.csv                      # Gerado: vértices do grafo
-│   ├── edges.csv                      # Gerado: arestas do grafo
-│   ├── results_pagerank.csv           # Gerado: resultados PageRank
-│   └── results_communities.csv        # Gerado: comunidades
-└── notebooks/
-    ├── 01_teste_basico_spark.ipynb
-    ├── 02_criando_grafo_basico.ipynb
-    └── 03_graphx_pagerank_communities.scala
+Dockerfile
+├── LICENSE
+├── README.md
+├── como_rodar_local.md
+├── dados
+│   ├── boardgames_100.json
+│   ├── edges.csv
+│   │   ├── _SUCCESS
+│   │   └── part-00000-04ed26ea-f3cb-424f-9ce6-9f2a6cbeff15-c000.csv
+│   ├── lpa_grouped_all.csv
+│   ├── nodes.csv
+│   │   ├── _SUCCESS
+│   │   └── part-00000-92ddd861-7457-4034-88ef-749d72549d18-c000.csv
+│   ├── output_lpa
+│   │   ├── _SUCCESS
+│   │   └── part-00000-f404ab64-b159-43e9-a06e-484d637f83f3-c000.csv
+│   ├── output_pagerank
+│   │   ├── _SUCCESS
+│   │   └── part-00000-43872037-9d2f-4470-be19-d7dc07e3a574-c000.csv
+│   └── pagerank_all.csv
+├── docker-compose.yml
+├── notebooks
+│   ├── 01.ipynb
+│   ├── 02.ipynb
+│   ├── 03_graphx_pagerank_communities.scala
+│   ├── 04.ipynb
+│   ├── lpa_graph.png
+│   └── pagerank_graph.png
+├── src
+└── teste_rapido.sh
 ```
 
 ## Como Executar os Algoritmos GraphX (Scala)
 
-### Opção 1: Via Jupyter (recomendado para apresentação)
+### Opção 1: Via Jupyter :
 
-Os notebooks Python preparam os dados e você pode visualizar os resultados.
+Os notebooks Python preparam os dados e você pode visualizar os resultados , rode os scripts 01 e 02 para preparar os dados  , o 4 é para montar a tabela 
 
-### Opção 2: Via spark-shell (avançado)
+
+### Opção 2: Via spark-shell rodar o codigo em scala para pode rodar o pagaRank e o LPA
 ```bash
 # Entrar no container
 docker exec -it spark-graphx-aed2 bash
@@ -152,14 +169,34 @@ MIT License
 
 ## Estrutura Final de Diretórios
 ```
-trabalho-aed2-grafos/
-├── Dockerfile
-├── docker-compose.yml
+Dockerfile
+├── LICENSE
 ├── README.md
-├── teste_rapido.sh
-├── dados/
-│   └── boardgames_100.json
-└── notebooks/
-    ├── 01_teste_basico_spark.ipynb
-    ├── 02_criando_grafo_basico.ipynb
-    └── 03_graphx_pagerank_communities.scala
+├── como_rodar_local.md
+├── dados
+│   ├── boardgames_100.json
+│   ├── edges.csv
+│   │   ├── _SUCCESS
+│   │   └── part-00000-04ed26ea-f3cb-424f-9ce6-9f2a6cbeff15-c000.csv
+│   ├── lpa_grouped_all.csv
+│   ├── nodes.csv
+│   │   ├── _SUCCESS
+│   │   └── part-00000-92ddd861-7457-4034-88ef-749d72549d18-c000.csv
+│   ├── output_lpa
+│   │   ├── _SUCCESS
+│   │   └── part-00000-f404ab64-b159-43e9-a06e-484d637f83f3-c000.csv
+│   ├── output_pagerank
+│   │   ├── _SUCCESS
+│   │   └── part-00000-43872037-9d2f-4470-be19-d7dc07e3a574-c000.csv
+│   └── pagerank_all.csv
+├── docker-compose.yml
+├── notebooks
+│   ├── 01.ipynb
+│   ├── 02.ipynb
+│   ├── 03_graphx_pagerank_communities.scala
+│   ├── 04.ipynb
+│   ├── lpa_graph.png
+│   └── pagerank_graph.png
+├── src
+└── teste_rapido.sh
+    
