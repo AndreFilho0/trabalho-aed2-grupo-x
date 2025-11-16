@@ -27,9 +27,10 @@ Abra seu navegador em: http://localhost:8888
 
 ### 4. Execute os notebooks na ordem
 
-1. 01_teste_basico_spark.ipynb - Testa a instalação do Spark
-2. 02_criando_grafo_basico.ipynb - Cria o grafo de jogos
+1. 01.ipynb - gera os dados prontos para análise (pré-processamento e criação do grafo).
+2. 02.ipynb -confirma que esses dados foram gerados corretamente.
 3. 03_graphx_pagerank_communities.scala - Executa os algoritmos GraphX
+4. 04.ipynb - faz a criação das tabelas em csv e agrupa os dados de LPA 
 
 ## Estrutura do Projeto
 ```
