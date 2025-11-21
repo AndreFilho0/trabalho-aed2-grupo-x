@@ -1,2 +1,0 @@
-mkdir -p data/raw data/processed data/output scripts
-chmod +x scripts/*.sh
