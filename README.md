@@ -1,239 +1,105 @@
+# Board Game PageRank Analysis com Spark GraphX
+
+Análise distribuída de influência de jogos de tabuleiro usando PageRank em Apache Spark.
+
+## Requisitos
+
+- Docker >= 20.10
+- Docker Compose >= 1.29
+- 4GB RAM mínimo
+- 2GB espaço em disco
+
+##  Início Rápido
+
+### 1. Clone e Configure
 
 
-#   — Sistema de Recomendação de Jogos com Spark GraphX
-
-# **Sistema de Recomendação de Jogos de Tabuleiro usando Grafos (Spark GraphX)**
-
-Este projeto implementa um **sistema de recomendação baseado em grafos** utilizando o **Apache Spark GraphX** e o **dataset "Board Games Recommendation: Graph Drawing Contest 2023"**.
-
-O objetivo é demonstrar a aplicação prática de conceitos estudados na disciplina de **Algoritmos e Estruturas de Dados 2 (AED2)**, especialmente:
-
-* Estruturas de grafos
-* Algoritmos de centralidade
-* Algoritmos de detecção de comunidades
-* Raciocínio baseado em redes
-
----
-
-#  **Objetivo do Projeto**
-
-Criar um sistema que recomende jogos de tabuleiro com base em dois critérios principais:
+Perfeito! Aqui está a versão revisada do Markdown, sem emojis e sem a parte da cópia dos arquivos, já que os volumes estão compartilhados:
 
 ---
 
-## **1. Recomendações por Popularidade (PageRank)**
+# Guia para Rodar PageRank Distribuído com Docker e Spark
 
-Usamos o algoritmo **PageRank** do GraphX para determinar quais jogos são mais influentes/populares no grafo.
-
-A ideia:
-
-> Quanto mais um jogo é recomendado por outros jogos (especialmente jogos importantes), maior é sua pontuação.
-
-O sistema permite:
-
-* Listar os jogos mais influentes globalmente
-* Recomendar jogos populares no contexto das preferências do usuário
+Este guia descreve como rodar a análise de PageRank sobre o dataset de board games de forma distribuída usando Spark em containers Docker.
 
 ---
 
-## **2. Recomendações por Similaridade (Comunidades no Grafo)**
+## 1. Pré-requisitos
 
-Usando algoritmos de detecção de comunidades, conseguimos agrupar jogos em grupos de similaridade.
-
-Algoritmos considerados:
-
-* **Connected Components**
-* **Label Propagation (LPA)**
-* **Strongly Connected Components (SCC)**
-* **Triangle Count** (para medir densidade local)
-
-Selecionamos para o sistema final:
-
-### **✔ Label Propagation (LPA)**
-
-Porque:
-
-* Identifica comunidades de forma rápida e eficiente
-* Funciona bem em grafos grandes
-* Gera grupos coesos de jogos similares
-
-Com isso, dado um jogo X, o sistema:
-
-1. Identifica a comunidade à qual X pertence
-2. Lista outros jogos dessa comunidade
-3. Ordena-os pela influência (PageRank) para melhorar a recomendação
+* Docker e Docker Compose instalados.
+* Boa conexão de internet (a primeira build vai baixar imagens e dependências).
+* Sistema com pelo menos 4GB de RAM para suportar os containers Spark.
 
 ---
 
-#  **Dataset Usado**
+## 2. Rodando o cluster Spark
 
-**Board Games Recommendation Dataset (Graph Drawing Contest 2023)**
-- LINK : https://mozart.diei.unipg.it/gdcontest/2023/creative/
+No diretório do projeto, execute:
 
-O dataset contém:
-
-* **Vértices:** jogos de tabuleiro
-* **Arestas:** relações de recomendação/similaridade entre jogos
-* **Possíveis atributos:** id, nome, nota, categoria etc.
-
-| Critério                                      | Dataset atende? | Justificativa                              |
-| --------------------------------------------- | --------------- | ------------------------------------------ |
-| Grafo claro                                   | ✔               | Nós = jogos, arestas = recomendações       |
-| Funciona com PageRank                         | ✔               | Grafo dirigido, perfeito para centralidade |
-| Funciona com Comunidades                      | ✔               | LPA gera clusters naturais                 |
-| Pequeno e eficiente                           | ✔               | Top-40 ou Top-100 → leve para GraphX       |
-| Visualmente compreensível                     | ✔               | Dá para fazer gráficos bonitos             |
-| Relaciona-se diretamente ao tema do professor | ✔               | É um problema real de recomendação         |
-| Fácil de explicar                             | ✔               | Jogo A → Jogo B básico                     |
-
-Nós tratamos o dataset em dois arquivos:
-
-```
-dados/
- ├── nodes.csv   (lista de jogos)
- └── edges.csv   (recomendações entre jogos)
+```bash
+docker-compose up --build -d
 ```
 
-Cada jogo é representado como um vértice, e cada relação de recomendação é uma aresta no grafo.
+Observações:
+
+* A primeira execução pode demorar, pois Docker irá baixar todas as imagens e construir os containers.
+* Depois disso, a inicialização será mais rápida.
 
 ---
 
-#  **Modelagem em Grafos**
+## 3. Acessando a interface do Spark
 
-### **Vértices (nodes.csv):**
+Abra o navegador em:
 
-* id
-* nome do jogo
-* (opcional: nota, complexidade etc.)
+```
+http://localhost:8080
+```
 
-### **Arestas (edges.csv):**
+* Aqui você verá o Spark Master e os workers.
+* Espere até que todos os workers estejam ativos — pode demorar alguns instantes na primeira vez .
 
-* id_jogo_origem
-* id_jogo_destino
-* peso (opcional → 1.0 por padrão)
+---
 
-A construção do grafo usa:
+## 4. Submeter a análise PageRank
 
-```scala
-val graph = Graph(verticesRDD, edgesRDD)
+Entre no container do driver:
+
+```bash
+docker exec -it app-driver /bin/bash
+```
+
+Dentro do container, rode o comando para submeter o job Spark:
+
+```bash
+/opt/spark/bin/spark-submit \
+  --master spark://spark-master:7077 \
+  --deploy-mode cluster \
+  --class com.boardgame.Main \
+  /app/board-game-pagerank.jar
+```
+
+Observações:
+
+* Ao submeter, você pode acompanhar o progresso na UI do Spark em `localhost:8080`.
+* Cada worker poderá processar o grafo, dependendo de como o Spark distribuir as tarefas.
+
+---
+
+## 5. Resultados
+
+* Os resultados serão salvos diretamente no volume compartilhado:
+
+```
+./data/output/pagerank-results.csv
+
 ```
 
 ---
 
-#  **Arquitetura do Sistema**
+## 6. Próximos passos / melhorias
 
-```
-Dataset CSV
-   ↓
-Spark DataFrames
-   ↓
-GraphX Graph
-   ↓
-PageRank + Label Propagation
-   ↓
-Sistema de Recomendação
-```
+* Explorar o REST API do Spark (`localhost:6066`) para submeter jobs de forma programática e facilitar testes e apresentações.
+* Avaliar a possibilidade de dividir o grafo em subgrafos e processar em paralelo, depois combinar os resultados (map-reduce).
+* Atualmente, todo o grafo é processado dentro de um único worker por vez, então a distribuição real ainda não ocorre.
 
----
 
-#  **Algoritmos Utilizados**
-
-### **1. PageRank (popularidade/global influence)**
-
-* Mede a importância de cada jogo no grafo
-* Retorna uma pontuação (rank) para cada jogo
-
-### **2. Label Propagation – LPA (detecção de comunidades / similaridade)**
-
-* Descobre grupos de jogos similares
-* Baseado em propagação de rótulos
-
-### **3. Coletar vizinhos (expansão local do grafo)**
-
-Usado para recomendações contextuais.
-
----
-
-#  **Funcionamento do Sistema de Recomendação**
-
-Dado um jogo **X**, fazemos:
-
----
-
-### **A) Recomendação baseada em popularidade**
-
-1. Pegamos a vizinhança de X (jogos conectados)
-2. Recuperamos o PageRank de cada um
-3. Ordenamos do mais influente ao menos influente
-4. Retornamos **os jogos mais populares próximos de X**
-
----
-
-### **B) Recomendação baseada em similaridade**
-
-1. Identificamos a comunidade do jogo X via LPA
-2. Pegamos todos os jogos desta comunidade
-3. Ordenamos pelo PageRank
-4. Retornamos **jogos similares com maior influência**
-
----
-
-#  **Exemplo Simplificado de Saída**
-
-```
-Recomendações para: "Catan"
-
-→ Baseado em Popularidade (PageRank):
-1) Pandemic
-2) Ticket to Ride
-3) Carcassonne
-
-→ Baseado em Similaridade (Comunidade):
-1) Stone Age
-2) Lords of Waterdeep
-3) Isle of Skye
-```
-
----
-
-#  **Tecnologias Usadas**
-
-* **Apache Spark 3.x**
-* **GraphX**
-* **Scala**
-* **Dataset em CSV**
-
----
-
-#  **Estrutura do Projeto**
-
-```
-trabalho-aed2-grupo-x/
- ├── apresentacao-grupo-X.pdf
- ├── README.md
- ├── dados/
- │   ├── nodes.csv
- │   └── edges.csv
- └── src/
-     ├── Main.scala
-     ├── GraphBuilder.scala
-     ├── PageRankModule.scala
-     ├── CommunityModule.scala
-     ├── Recommender.scala
-     └── Utils.scala
-```
-
----
-
-#  **Conclusão**
-
-Este projeto mostra como algoritmos clássicos de grafos podem ser aplicados para criar um sistema eficiente de recomendação de jogos de tabuleiro.
-Utilizando PageRank e Label Propagation em conjunto, conseguimos:
-
-* identificar jogos influentes/populares
-* agrupar jogos similares
-* gerar recomendações personalizadas baseadas na estrutura do grafo
-
-O uso de Spark GraphX torna o sistema escalável e capaz de lidar com datasets grandes, destacando sua aplicação no mundo real.
-
----

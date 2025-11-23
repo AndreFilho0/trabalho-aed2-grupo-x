@@ -1,50 +1,54 @@
-FROM eclipse-temurin:11-jdk-jammy
+FROM eclipse-temurin:11-jdk-jammy as builder
 
-# Instalar dependências básicas
+WORKDIR /build
+
+# Instalar SBT
 RUN apt-get update && apt-get install -y \
     curl \
-    wget \
-    python3 \
-    python3-pip \
-    procps \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Variáveis de ambiente
-ENV SPARK_VERSION=3.5.0
-ENV HADOOP_VERSION=3
-ENV SPARK_HOME=/opt/spark
-ENV PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
-ENV PYSPARK_PYTHON=python3
+RUN curl -L https://github.com/sbt/sbt/releases/download/v1.9.6/sbt-1.9.6.tgz \
+    -o /tmp/sbt.tgz && \
+    tar -xzf /tmp/sbt.tgz -C /opt/ && \
+    mv /opt/sbt /opt/sbt-1.9.6 && \
+    ln -s /opt/sbt-1.9.6 /opt/sbt && \
+    chmod +x /opt/sbt/bin/sbt && \
+    rm /tmp/sbt.tgz
 
-# Baixar e instalar Spark
-RUN wget -q https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
-    && tar -xzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
-    && mv spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} ${SPARK_HOME} \
-    && rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+ENV SBT_HOME=/opt/sbt
+ENV PATH=$PATH:$SBT_HOME/bin
 
-# Instalar bibliotecas Python
-RUN pip3 install --no-cache-dir \
-    pyspark==${SPARK_VERSION} \
-    jupyter \
-    notebook \
-    pandas \
-    matplotlib \
-    seaborn \
-    networkx
+COPY build.sbt .
+COPY project ./project
+COPY src ./src
 
-# Criar diretório de trabalho
+RUN sbt clean assembly
+
+FROM spark:3.5.7-scala2.12-java11-ubuntu
+
 WORKDIR /app
 
-# Copiar dados e notebooks
-COPY dados /app/dados
-COPY notebooks /app/notebooks
+# Copiar JAR
+COPY --from=builder /build/target/board-game-pagerank.jar /app/
+
+# Criar diretórios usados no entrypoint
+RUN mkdir -p /app/data/raw /app/data/processed /app/data/output /app/logs
+
+# Criar diretório e arquivo de configuração do Spark usados no entrypoint.sh
+RUN mkdir -p /opt/spark/conf && \
+    touch /opt/spark/conf/spark-defaults.conf
+
+# Corrigir permissões do diretório de logs do Spark
+RUN mkdir -p /opt/spark/logs && \
+    chmod -R 777 /opt/spark/logs
+
+# Copiar entrypoint
+COPY --chmod=755 entrypoint.sh /app/
 
 # Expor portas
-# 8888 - Jupyter Notebook
-# 4040 - Spark UI
-EXPOSE 8888 4040
+EXPOSE 8080 8081 8082 8083 7077 7001 7002 7003 4040 6066
 
-# Script de inicialização
-CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 
