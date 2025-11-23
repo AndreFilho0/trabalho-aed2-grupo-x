@@ -35,7 +35,6 @@ derby.log
 spark-warehouse/
 
 # Data
-data/output/*
 !data/output/.gitkeep
 data/processed/*
 !data/processed/.gitkeep

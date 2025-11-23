@@ -15,41 +15,35 @@ object GraphBuilder {
     rank: Int,
     recommendationCount: Int
   )
-  
+ 
   def buildGameNetwork(gamesDF: DataFrame): Graph[GameVertex, Double] = {
-    
-    import gamesDF.sparkSession.implicits._
-    
-    val sparkContext = gamesDF.sparkSession.sparkContext
-    
-    val vertices: RDD[(VertexId, GameVertex)] = gamesDF.rdd.map { row =>
-      val id = row.getAs[Long]("id")
-      val title = row.getAs[String]("title")
-      val year = row.getAs[Int]("year")
-      val rating = row.getAs[Double]("rating_value")
-      val rank = row.getAs[Int]("rank")
-      val recCount = row.getAs[Int]("recommendationCount")
-      
-      (id, GameVertex(id, title, year, rating, rank, recCount))
-    }
-    
-    val edges: RDD[Edge[Double]] = gamesDF.rdd.flatMap { row =>
-      val sourceId = row.getAs[Long]("id")
-      val recommendedIds = row.getAs[scala.collection.Seq[Long]]("fans_liked")
-      
-      if (recommendedIds != null) {
-        recommendedIds.map { targetId =>
-          Edge(sourceId, targetId, 1.0)
-        }
-      } else {
-        Seq()
-      }
-    }
-    
-    val defaultVertex = GameVertex(0L, "Unknown", 0, 0.0, 0, 0)
-    Graph(vertices, edges, defaultVertex)
+
+  import gamesDF.sparkSession.implicits._
+
+  val vertices = gamesDF.rdd.map { row =>
+    val id = row.getAs[Long]("id")
+    val title = row.getAs[String]("title")
+    val rating = row.getAs[Double]("rating_value")
+    val year = row.getAs[Int]("year")
+    val rank = row.getAs[Int]("rank")
+    val recCount = row.getAs[Int]("recommendationCount")
+
+    (id, GameVertex(id, title, year, rating, rank, recCount))
   }
-  
+
+  val edges = gamesDF.rdd.flatMap { row =>
+    val source = row.getAs[Long]("id")
+    val recs = row.getAs[Seq[Long]]("fans_liked")
+    if (recs != null) recs.map(target => Edge(source, target, 1.0)) else Seq()
+  }
+
+  val defaultVertex = GameVertex(0L, "Unknown", 0, 0.0, 0, 0)
+
+  Graph(vertices, edges, defaultVertex)
+    .partitionBy(PartitionStrategy.EdgePartition2D)
+}
+
+    
   def getGraphStatistics(graph: Graph[GameVertex, Double]): Map[String, Any] = {
     Map(
       "Total de Vértices (Jogos)" -> graph.numVertices,

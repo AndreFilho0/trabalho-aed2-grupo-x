@@ -11,9 +11,9 @@ case class PageRankResult(
 ) {
   def influence: String = {
     pageRankScore match {
-      case x if x > 0.015 => "Muito Alta"
-      case x if x > 0.010 => "Alta"
-      case x if x > 0.005 => "Média"
+      case x if x > 1.5 => "Muito Alta"
+      case x if x > 1.0 => "Alta"
+      case x if x > 0.5 => "Média"
       case _ => "Baixa"
     }
   }

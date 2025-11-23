@@ -2,75 +2,172 @@ package com.boardgame.graph
 
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 import com.boardgame.graph.GraphBuilder.GameVertex
 import com.boardgame.models.PageRankResult
+import com.boardgame.utils.Logger
 
 object PageRankEngine {
   
+  /**
+   * Computa PageRank com otimizações para processamento distribuído
+   * Aproveita o MapReduce implícito do Spark/GraphX
+   */ 
   def computePageRank(
   graph: Graph[GameVertex, Double],
-  tolerance: Double = 0.001,
-  maxIterations: Int = 30
+  tolerance: Double,
+  maxIterations: Int
 ): RDD[(VertexId, Double)] = {
-  
-  println("\n[*] Calculando PageRank...")
-  println(s"    Tolerância: $tolerance")
-  println(s"    Máximo de Iterações: $maxIterations")
 
-  val pageRankGraph =
-    if (tolerance > 0) {
-      // PageRank até convergência (modo recomendado)
-      println("    ➜ Modo: Convergência (pageRank)")
-      graph.pageRank(tolerance)
-    } else {
-      // PageRank com N iterações
-      println("    ➜ Modo: Iterativo (staticPageRank)")
-      graph.staticPageRank(maxIterations)
-    }
-  
-  pageRankGraph.vertices
+  val pr = if (tolerance > 0)
+    graph.pageRank(tolerance)
+  else
+    graph.staticPageRank(maxIterations)
+
+  pr.vertices
 }
 
+    
+  /**
+   * Reparticiona o grafo para distribuição eficiente entre workers
+   * Usa particionamento baseado em hash para melhor balanceamento
+   */
+  private def repartitionGraphForDistribution(
+    graph: Graph[GameVertex, Double],
+    numPartitions: Int
+  ): Graph[GameVertex, Double] = {
+    
+    Logger.info(s"Reparticionando grafo em $numPartitions partições...")
+    
+    val repartitionedVertices = graph.vertices.repartition(numPartitions)
+    val repartitionedEdges = graph.edges.repartition(numPartitions)
+    
+    val defaultVertex = GraphBuilder.GameVertex(0L, "Unknown", 0, 0.0, 0, 0)
+    Graph(repartitionedVertices, repartitionedEdges, defaultVertex)
+  }
   
+  /**
+   * Combina PageRank com metadados usando join distribuído (MapReduce)
+   */
   def combinePageRankWithMetadata(
     pageRankResults: RDD[(VertexId, Double)],
     graph: Graph[GameVertex, Double]
   ): RDD[PageRankResult] = {
     
+    Logger.info("Combinando PageRank com metadados dos jogos (join distribuído)...")
+    
     val vertexData = graph.vertices
     
-    pageRankResults.join(vertexData).map { case (gameId, (prScore, vertex)) =>
-      PageRankResult(
-        gameId = gameId,
-        gameTitle = vertex.title,
-        rank = vertex.rank,
-        pageRankScore = prScore,
-        rating = vertex.rating,
-        year = vertex.year,
-        recommendationCount = vertex.recommendationCount
-      )
-    }
+    // Join distribuído - MapReduce automático
+    val combined = pageRankResults
+      .join(vertexData) // MapReduce shuffle
+      .map { case (gameId, (prScore, vertex)) =>
+        PageRankResult(
+          gameId = gameId,
+          gameTitle = vertex.title,
+          rank = vertex.rank,
+          pageRankScore = prScore,
+          rating = vertex.rating,
+          year = vertex.year,
+          recommendationCount = vertex.recommendationCount
+        )
+      }
+    
+    combined.cache()
+    Logger.success(s"✓ ${combined.count()} resultados combinados")
+    combined
   }
   
+ 
   def getTopGames(
     results: RDD[PageRankResult],
     topK: Int = 20
   ): Array[PageRankResult] = {
     
-    results
+    Logger.info(s"Selecionando top $topK jogos (sort distribuído)...")
+    
+    val sorted = results
       .sortBy(_.pageRankScore, ascending = false)
       .take(topK)
+    
+    Logger.success(s"✓ Top $topK selecionados")
+    sorted
   }
   
+ 
   def getInfluentialGames(
     results: RDD[PageRankResult],
     minScore: Double = 0.01
   ): Array[PageRankResult] = {
     
-    results
-      .filter(_.pageRankScore > minScore)
+    Logger.info(s"Filtrando jogos com score > $minScore...")
+    
+    val filtered = results
+      .filter(_.pageRankScore > minScore) // Operação distribuída
       .sortBy(_.pageRankScore, ascending = false)
       .collect()
+    
+    Logger.success(s"✓ ${filtered.length} jogos influentes encontrados")
+    filtered
+  }
+  
+  
+  def computePageRankStatistics(
+    results: RDD[PageRankResult]
+  ): Map[String, Double] = {
+    
+    Logger.info("Computando estatísticas de PageRank (agregação distribuída)...")
+    
+    val stats = results
+      .map(r => (r.pageRankScore, 1L))
+      .aggregate((0.0, 0L, Double.MaxValue, Double.MinValue))(
+        // Função de agregação local (map-side)
+        { case ((sum, count, min, max), (score, _)) =>
+          (sum + score, count + 1, math.min(min, score), math.max(max, score))
+        },
+        // Função de agregação global (reduce-side)
+        { case ((sum1, count1, min1, max1), (sum2, count2, min2, max2)) =>
+          (sum1 + sum2, count1 + count2, math.min(min1, min2), math.max(max1, max2))
+        }
+      )
+    
+    val (totalSum, count, minScore, maxScore) = stats
+    val avgScore = if (count > 0) totalSum / count else 0.0
+    
+    Map(
+      "min" -> minScore,
+      "max" -> maxScore,
+      "avg" -> avgScore,
+      "count" -> count.toDouble
+    )
+  }
+  
+  
+  def analyzeInfluence(
+    results: RDD[PageRankResult],
+    gameGraph: Graph[GameVertex, Double]
+  ): Unit = {
+    
+    Logger.info("Analisando influência dos jogos...")
+    
+    // Compute in-degree (quantos jogos recomendam este)
+    val inDegrees = gameGraph.inDegrees
+    
+    // Compute out-degree (quantos jogos este recomenda)
+    val outDegrees = gameGraph.outDegrees
+    
+    val influenceMetrics = results
+      .map(r => r.gameId -> r.pageRankScore)
+      .join(inDegrees)
+      .map { case (gameId, (score, inDeg)) =>
+        (gameId, ("score" -> score, "inDegree" -> inDeg.toDouble))
+      }
+    
+    val avgInDegree = inDegrees
+      .map(_._2.toDouble)
+      .mean()
+    
+    Logger.success(s"✓ Grau médio de entrada: $avgInDegree")
   }
   
   def compareWithRanking(
@@ -97,3 +194,4 @@ object PageRankEngine {
     println("="*80 + "\n")
   }
 }
+

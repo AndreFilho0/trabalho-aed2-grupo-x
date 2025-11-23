@@ -1,6 +1,3 @@
-# =========================
-# Stage 1: Builder
-# =========================
 FROM eclipse-temurin:11-jdk-jammy as builder
 
 WORKDIR /build
@@ -28,9 +25,6 @@ COPY src ./src
 
 RUN sbt clean assembly
 
-# =========================
-# Stage 2: Runtime
-# =========================
 FROM spark:3.5.7-scala2.12-java11-ubuntu
 
 WORKDIR /app
