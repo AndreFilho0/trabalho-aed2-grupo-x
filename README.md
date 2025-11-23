@@ -14,7 +14,6 @@ Análise distribuída de influência de jogos de tabuleiro usando PageRank em Ap
 ### 1. Clone e Configure
 
 
-Perfeito! Aqui está a versão revisada do Markdown, sem emojis e sem a parte da cópia dos arquivos, já que os volumes estão compartilhados:
 
 ---
 
