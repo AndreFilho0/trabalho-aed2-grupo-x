@@ -21,7 +21,14 @@ spark.eventLog.dir           /opt/spark/logs
 # Network
 spark.driver.blockManager.port    8888
 spark.shuffle.service.port        8889
+spark.master.rest.enabled         true
+spark.master.rest.port            6066
 EOF
+
+if [[ "${SPARK_MASTER_REST_ENABLED}" =~ ^([Tt][Rr][Uu][Ee]|1)$ ]]; then
+  REST_PORT=${SPARK_MASTER_REST_PORT:-6066}
+  export SPARK_MASTER_OPTS="${SPARK_MASTER_OPTS} -Dspark.master.rest.enabled=true -Dspark.master.rest.port=${REST_PORT}"
+fi
 
 # Determinar o modo de execução
 MODE=${SPARK_MODE:-"local"}
