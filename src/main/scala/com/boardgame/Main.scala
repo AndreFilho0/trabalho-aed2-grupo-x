@@ -59,7 +59,7 @@ object Main {
         
       Logger.success(s"✓ ${cleanAndSortedResults.count()} resultados válidos encontrados após a filtragem.")
 
-      // Coleta o RDD filtrado para o Driver e salva
+
       DataWriter.savePageRankResults(cleanAndSortedResults.collect(), config.outputCsvPath)
 
            Logger.success("      PROCESSAMENTO DE PAGERANK CONCLUÍDO!")

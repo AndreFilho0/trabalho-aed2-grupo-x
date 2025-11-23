@@ -9,10 +9,7 @@ import com.boardgame.utils.Logger
 
 object PageRankEngine {
   
-  /**
-   * Computa PageRank com otimizações para processamento distribuído
-   * Aproveita o MapReduce implícito do Spark/GraphX
-   */ 
+ 
   def computePageRank(
   graph: Graph[GameVertex, Double],
   tolerance: Double,
@@ -28,10 +25,7 @@ object PageRankEngine {
 }
 
     
-  /**
-   * Reparticiona o grafo para distribuição eficiente entre workers
-   * Usa particionamento baseado em hash para melhor balanceamento
-   */
+ 
   private def repartitionGraphForDistribution(
     graph: Graph[GameVertex, Double],
     numPartitions: Int
@@ -46,9 +40,7 @@ object PageRankEngine {
     Graph(repartitionedVertices, repartitionedEdges, defaultVertex)
   }
   
-  /**
-   * Combina PageRank com metadados usando join distribuído (MapReduce)
-   */
+ 
   def combinePageRankWithMetadata(
     pageRankResults: RDD[(VertexId, Double)],
     graph: Graph[GameVertex, Double]
@@ -58,7 +50,7 @@ object PageRankEngine {
     
     val vertexData = graph.vertices
     
-    // Join distribuído - MapReduce automático
+  
     val combined = pageRankResults
       .join(vertexData) // MapReduce shuffle
       .map { case (gameId, (prScore, vertex)) =>
@@ -150,10 +142,10 @@ object PageRankEngine {
     
     Logger.info("Analisando influência dos jogos...")
     
-    // Compute in-degree (quantos jogos recomendam este)
+   
     val inDegrees = gameGraph.inDegrees
     
-    // Compute out-degree (quantos jogos este recomenda)
+  
     val outDegrees = gameGraph.outDegrees
     
     val influenceMetrics = results
