@@ -103,7 +103,5 @@ Observações:
 ## 6. Próximos passos / melhorias
 
 * Explorar o REST API do Spark (`localhost:6066`) para submeter jobs de forma programática e facilitar testes e apresentações.
-* Avaliar a possibilidade de dividir o grafo em subgrafos e processar em paralelo, depois combinar os resultados (map-reduce).
-* Atualmente, todo o grafo é processado dentro de um único worker por vez, então a distribuição real ainda não ocorre.
 
 
