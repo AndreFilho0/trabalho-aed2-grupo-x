@@ -75,6 +75,11 @@ Dentro do container, rode o comando para submeter o job Spark:
   --master spark://spark-master:7077 \
   --deploy-mode cluster \
   --class com.boardgame.Main \
+  --num-executors 3 \
+  --executor-cores 2 \
+  --executor-memory 1g \
+  --driver-memory 1g \
+  --conf spark.sql.shuffle.partitions=3 \
   /app/board-game-pagerank.jar
 ```
 
