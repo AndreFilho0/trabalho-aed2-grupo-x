@@ -2,6 +2,8 @@
 
 Análise distribuída de influência de jogos de tabuleiro usando PageRank em Apache Spark.
 
+![Diagrama do Sistema](diagrama.jpg)
+
 ## Requisitos
 
 - Docker >= 20.10
