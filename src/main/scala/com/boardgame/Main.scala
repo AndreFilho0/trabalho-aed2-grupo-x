@@ -17,9 +17,6 @@ object Main {
       Logger.info(" INICIANDO CÁLCULO DISTRIBUÍDO DE PAGERANK")
    
 
-      //-------------------------------------------------------
-      // 1. CARREGAR JSON
-      //-------------------------------------------------------
       Logger.info("[1] Carregando dataset JSON...")
       val rawGames = DataLoader.loadBoardGamesFromJson(spark, config.inputJsonPath)
 

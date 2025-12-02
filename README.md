@@ -154,8 +154,53 @@ Quando a submissão for aceita, a API retorna um identificador de driver semelha
 
 ---
 
-## 7. Próximos passos / melhorias
+## 7. estrutura do projeto
 
-* Explorar o REST API do Spark (`localhost:6066`) para submeter jobs de forma programática e facilitar testes e apresentações.
+
+## 8 arvore tree do projeto
+```
+.
+├── Dockerfile
+├── README.md
+├── build.sbt
+├── data
+│   ├── output
+│   │   └── pagerank-results.csv
+│   └── raw
+│       └── bgg-games.json
+├── docker-compose.yml
+├── entrypoint.sh
+├── project
+│   ├── build.properties
+│   └── plugins.sbt
+├── run.sh
+└── src
+    └── main
+        └── scala
+            └── com
+                └── boardgame
+                    ├── Main.scala
+                    ├── data
+                    │   ├── DataLoader.scala
+                    │   └── DataWriter.scala
+                    ├── graph
+                    │   ├── GraphAnalyzer.scala
+                    │   ├── GraphBuilder.scala
+                    │   └── PageRankEngine.scala
+                    ├── models
+                    │   ├── BoardGame.scala
+                    │   ├── GameRating.scala
+                    │   ├── GameTypes.scala
+                    │   └── PageRankResult.scala
+                    ├── parsers
+                    │   └── JsonParser.scala
+                    └── utils
+                        ├── ConfigLoader.scala
+                        ├── Logger.scala
+                        └── SparkSessionProvider.scala
+
+15 directories, 24 files
+```
+ 
 
 
