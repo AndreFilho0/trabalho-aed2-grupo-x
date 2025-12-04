@@ -35,16 +35,23 @@ Este guia descreve como rodar a análise de PageRank sobre o dataset de board ga
 
 ## 2. Rodando o cluster Spark
 
-No diretório do projeto, execute:
+Todo o fluxo (build + subida dos containers + submissão do PageRank) está empacotado no script `run.sh`. No diretório do projeto, execute:
 
 ```bash
-docker-compose up --build -d
+chmod +x run.sh
+./run.sh
 ```
+
+O script faz, em sequência:
+
+1. `docker compose build --no-cache` para garantir uma imagem atualizada.
+2. `docker compose up -d` para iniciar master, workers e driver.
+3. `docker exec -it app-driver /bin/bash -c "spark-submit ..."` para submeter automaticamente o job `com.boardgame.Main`.
 
 Observações:
 
-* A primeira execução pode demorar, pois Docker irá baixar todas as imagens e construir os containers.
-* Depois disso, a inicialização será mais rápida.
+* A primeira execução pode demorar, pois Docker irá baixar as imagens e instalar dependências.
+* Enquanto o job roda você pode acompanhar `localhost:8080` normalmente.
 
 ---
 
@@ -63,13 +70,7 @@ http://localhost:8080
 
 ## 4. Submeter a análise PageRank
 
-Entre no container do driver:
-
-```bash
-docker exec -it app-driver /bin/bash
-```
-
-Dentro do container, rode o comando para submeter o job Spark:
+Se você usou o `run.sh`, a submissão já terá acontecido automaticamente. Caso queira repetir apenas a submissão sem rebuildar tudo, pode reutilizar o trecho abaixo dentro do container `app-driver`:
 
 ```bash
 /opt/spark/bin/spark-submit \
